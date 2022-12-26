@@ -1,0 +1,18 @@
+chartPath: ".."
+tests:
+- title: when overwriting the image field
+  render:
+    releaseName: foo
+    namespace: default
+    values: |
+      image:
+        repository: test
+        pullPolicy: Always
+        tag: 1.2.3
+  assertions:
+  - kind: yq
+    description: the image should be constructed correctly
+    query: 'select(.kind=="Deployment") | .spec.template.spec.containers[0].image'
+    expectedResult: "test:1.2.3"
+
+      
