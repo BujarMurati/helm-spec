@@ -18,6 +18,35 @@ type TestCase struct {
 	Assertions []Assertion `json:"assertions"`
 }
 
+type TestCaseResult struct {
+	Title            string             `json:"title"`
+	Render           RenderInstructions `json:"render"`
+	Succeeded        bool               `json:"succeeded"`
+	Manifest         string             `json:"manifest"`
+	AssertionResults []AssertionResult  `json:"assertionResults"`
+	Error            error              `json:"error"`
+}
+
+// renders a chart based on render instructions and evaluates assertions
+func (t TestCase) Execute(chartPath string) (result TestCaseResult) {
+	result.Title = t.Title
+	result.Render = t.Render
+	result.Manifest, result.Error = t.Render.Execute(chartPath)
+	if t.Render.ShouldFailToRender {
+		result.Succeeded = result.Error != nil
+		return result
+	}
+	result.Succeeded = true
+	for _, assertion := range t.Assertions {
+		r := assertion.Evaluate(result.Manifest)
+		result.AssertionResults = append(result.AssertionResults, r)
+		if !r.Succeeded {
+			result.Succeeded = false
+		}
+	}
+	return result
+}
+
 // a related group of test cases for the same helm chart
 type HelmSpec struct {
 	// title

@@ -12,7 +12,7 @@ func TestExecuteRenderInstructions(t *testing.T) {
 	assert.NoError(t, err)
 	actualManifest, err := spec.TestCases[0].Render.Execute("./testdata/charts/example")
 	assert.NoError(t, err)
-	expectedManifest, err := os.ReadFile("./testdata/manifest.yaml")
+	expectedManifest, err := os.ReadFile("./testdata/example_spec_0_manifest.yaml")
 	assert.NoError(t, err)
 	assert.Equal(t, string(expectedManifest), actualManifest)
 }
