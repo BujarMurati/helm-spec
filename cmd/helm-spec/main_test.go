@@ -67,6 +67,11 @@ func TestValidatesTestSuitePath(t *testing.T) {
 			path:           "./main_test.go",
 			errMsgFragment: "not a directory",
 		},
+		{
+			title:          "directory without *_spec.yaml files",
+			path:           "./testdata",
+			errMsgFragment: "no *_spec.yaml files",
+		},
 	}
 
 	for _, c := range testCases {

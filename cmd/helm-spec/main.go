@@ -12,6 +12,8 @@ import (
 const (
 	errFailedToGetAbsolutePath = "failed to get absolute path of: %v"
 	errNotADirectory           = "%v is not a directory"
+	errNoSpecFilesFound        = "no %v files found in %v"
+	specFileGlobPattern        = "*_spec.yaml"
 )
 
 type cliSettings struct {
@@ -28,6 +30,7 @@ var defaultSettings = cliSettings{
 	ExitErrHandler: nil,
 }
 
+// validates that the path is an existing directory containing spec files
 func validateTestSuitePath(cCtx *cli.Context, value string) (err error) {
 	absPath, err := filepath.Abs(value)
 	if err != nil {
@@ -39,6 +42,13 @@ func validateTestSuitePath(cCtx *cli.Context, value string) (err error) {
 	}
 	if !info.IsDir() {
 		return fmt.Errorf(errNotADirectory, absPath)
+	}
+	specFiles, err := filepath.Glob(filepath.Join(absPath, specFileGlobPattern))
+	if err != nil {
+		return err
+	}
+	if len(specFiles) == 0 {
+		return fmt.Errorf(errNoSpecFilesFound, specFileGlobPattern, absPath)
 	}
 	return nil
 }
