@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	helmspec "github.com/bujarmurati/helm-spec"
 	"github.com/urfave/cli/v2"
 )
 
@@ -13,7 +14,7 @@ const (
 	errFailedToGetAbsolutePathTemplate = "failed to get absolute path of: %v"
 	errNotADirectoryTemplate           = "%v is not a directory"
 	errNoSpecFilesFoundTemplate        = "no %v files found in %v"
-	specFileGlobPattern        = "*_spec.yaml"
+	specFileGlobPattern                = "*_spec.yaml"
 )
 
 type cliSettings struct {
@@ -21,6 +22,7 @@ type cliSettings struct {
 	Writer         io.Writer
 	ErrWriter      io.Writer
 	ExitErrHandler cli.ExitErrHandlerFunc
+	TestRunner     helmspec.TestRunner
 }
 
 var defaultSettings = cliSettings{
@@ -28,6 +30,7 @@ var defaultSettings = cliSettings{
 	Writer:         os.Stdout,
 	ErrWriter:      os.Stderr,
 	ExitErrHandler: nil,
+	TestRunner:     &helmspec.HelmTestRunner{},
 }
 
 // validates that the path is an existing directory containing spec files
@@ -71,6 +74,23 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 						TakesFile:   false,
 						Action:      validateTestSuitePath,
 					},
+				},
+				Action: func(cCtx *cli.Context) (err error) {
+					specDir := cCtx.Path("testsuite")
+					specFiles, err := filepath.Glob(filepath.Join(specDir, specFileGlobPattern))
+					if err != nil {
+						return err
+					}
+					reporter, err := settings.TestRunner.Run(specFiles)
+					if err != nil {
+						return err
+					}
+					report, err := reporter.Report()
+					if err != nil {
+						return err
+					}
+					fmt.Fprint(settings.Writer, report)
+					return nil
 				},
 			},
 		},

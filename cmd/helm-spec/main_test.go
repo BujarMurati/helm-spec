@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	helmspec "github.com/bujarmurati/helm-spec"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 )
@@ -14,27 +16,42 @@ type errCapture struct {
 	Err error
 }
 
-func testSettings(e *errCapture) cliSettings {
+type mockTestReporter struct{}
 
-	return cliSettings{
+func (m mockTestReporter) Report() (string, error) {
+	return "success!", nil
+}
+
+type mockTestRunner struct {
+	SpecFiles []string
+	HasRun    bool
+}
+
+func (m *mockTestRunner) Run(specFiles []string) (r helmspec.TestReporter, err error) {
+	m.SpecFiles = specFiles
+	m.HasRun = true
+	return mockTestReporter{}, nil
+}
+
+// runs the CLI with args. Outputs and errors  are captured
+func testRun(t *testing.T, args []string) (runner *mockTestRunner, out *strings.Builder, err error) {
+	t.Helper()
+	e := &errCapture{}
+	runner = &mockTestRunner{}
+	out = &strings.Builder{}
+	settings := cliSettings{
 		Reader:    strings.NewReader(""),
-		Writer:    &strings.Builder{},
-		ErrWriter: &strings.Builder{},
+		Writer:    out,
+		ErrWriter: out,
 		ExitErrHandler: func(cCtx *cli.Context, err error) {
 			e.Ctx = cCtx
 			e.Err = err
 		},
+		TestRunner: runner,
 	}
-}
-
-// runs the CLI with args. Outputs and errors  are captured
-func testRun(t *testing.T, args []string) (settings cliSettings, e *errCapture, err error) {
-	t.Helper()
-	e = &errCapture{}
-	settings = testSettings(e)
 	app, err := createApp(settings)
 	assert.NoError(t, err)
-	return settings, e, app.Run(args)
+	return runner, out, app.Run(args)
 }
 
 func TestHasTestCommand(t *testing.T) {
@@ -85,4 +102,23 @@ func TestValidatesTestSuitePath(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTestCommandExecutesTestRunner(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", "test", fmt.Sprintf("-t=%v", specDir)}
+	runner, _, err := testRun(t, args)
+	assert.NoError(t, err)
+	assert.True(t, runner.HasRun)
+	assert.ElementsMatch(t, []string{filepath.Join(specDir, "example_spec.yaml")}, runner.SpecFiles)
+}
+
+func TestTestCommandsWritesTestReport(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", "test", fmt.Sprintf("-t=%v", specDir)}
+	_, out, err := testRun(t, args)
+	assert.NoError(t, err)
+	assert.Equal(t, "success!", out.String())
 }
