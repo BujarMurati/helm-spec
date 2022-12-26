@@ -2,6 +2,7 @@ package helmspec
 
 import (
 	"os"
+	"path/filepath"
 
 	"sigs.k8s.io/yaml"
 )
@@ -40,18 +41,32 @@ type TestCase struct {
 	Assertions []Assertion `json:"assertions"`
 }
 
+// a related group of test cases for the same helm chart
 type HelmSpec struct {
-	Title     string     `json:"title"`
-	ChartPath string     `json:"chartPath"`
+	// title
+	Title string `json:"title"`
+	// path to the helm chart (absolute or relative to the spec file directory)
+	ChartPath string `json:"chartPath"`
+	// test cases to run for the helm chart
 	TestCases []TestCase `json:"testCases"`
 }
 
 func NewSpec(filePath string) (spec *HelmSpec, err error) {
 	spec = new(HelmSpec)
-	content, err := os.ReadFile(filePath)
+	absFilePath, err := filepath.Abs(filePath)
+	if err != nil {
+		return spec, err
+	}
+	content, err := os.ReadFile(absFilePath)
 	if err != nil {
 		return spec, err
 	}
 	err = yaml.Unmarshal(content, spec)
+	if err != nil {
+		return spec, err
+	}
+	if !filepath.IsAbs(spec.ChartPath) {
+		spec.ChartPath = filepath.Join(filepath.Dir(absFilePath), spec.ChartPath)
+	}
 	return spec, err
 }
