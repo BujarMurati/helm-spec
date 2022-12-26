@@ -32,8 +32,14 @@ func (t TestCase) Execute(chartPath string) (result TestCaseResult) {
 	result.Title = t.Title
 	result.Render = t.Render
 	result.Manifest, result.Error = t.Render.Execute(chartPath)
+	// sometimes we want rendering to fail, i.e. to verify
+	// invalid values are rejected by the chart
 	if t.Render.ShouldFailToRender {
 		result.Succeeded = result.Error != nil
+		return result
+	}
+	if result.Error != nil {
+		result.Succeeded = false
 		return result
 	}
 	result.Succeeded = true

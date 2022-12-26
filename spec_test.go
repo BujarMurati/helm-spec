@@ -36,3 +36,32 @@ func TestExecuteTestCaseHappyPath(t *testing.T) {
 	assert.Equal(t, 1, len(result.AssertionResults))
 	assert.True(t, result.AssertionResults[0].Succeeded)
 }
+
+func TestExecuteTestDoesNotSucceedIfAnyAssertionFails(t *testing.T) {
+	spec, err := NewSpec("./testdata/charts/example/specs/example_spec.yaml")
+	assert.NoError(t, err)
+	result := spec.TestCases[1].Execute(spec.ChartPath)
+	assert.NoError(t, result.Error)
+	assert.False(t, result.Succeeded)
+}
+
+func TestExecuteTestShouldAbortWhenRenderingFailsUnexpectedly(t *testing.T) {
+	spec, err := NewSpec("./testdata/charts/example/specs/example_spec.yaml")
+	assert.NoError(t, err)
+	result := spec.TestCases[0].Execute("./not/an/existing/chart")
+	assert.Error(t, result.Error)
+	assert.False(t, result.Succeeded)
+	// should not run or report assertions if we have an error
+	// at the test case level
+	assert.Equal(t, 0, len(result.AssertionResults))
+}
+
+func TestExecuteTestShouldSucceedOnExpectedFailure(t *testing.T) {
+	spec, err := NewSpec("./testdata/charts/example/specs/example_spec.yaml")
+	assert.NoError(t, err)
+	result := spec.TestCases[2].Execute("./not/an/existing/chart")
+	assert.True(t, result.Succeeded)
+	// should not run or report assertions if we have an error
+	// at the test case level
+	assert.Equal(t, 0, len(result.AssertionResults))
+}
