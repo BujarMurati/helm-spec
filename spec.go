@@ -7,20 +7,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// inputs for rendering a the chart with `helm template`
-type RenderInstructions struct {
-	// the release name to pass to `helm template`
-	ReleaseName string `json:"releaseName"`
-	// the release namespace to pass to `helm template`
-	Namespace string `json:"namespace"`
-	// all user-supplied values in one inline yaml document
-	Values string `json´:"values"`
-	// extra arguments passed through to the helm CLI, i.e. ["--set-file", "foo=foo.txt"]
-	ExtraArgs []string `json:"extraArgs"`
-	// require rendering to fail for the test to pass
-	ShouldFailToRender bool `json:"shouldFailToRender"`
-}
-
 // a testcase bundles rendering instructions with a list of assertions
 // to perform against the rendered output
 type TestCase struct {
