@@ -11,9 +11,8 @@ testCases:
         pullPolicy: Always
         tag: 1.2.3
     extraArgs: []
+    shouldFailToRender: false
   assertions:
   - description: the image should be constructed correctly
     query: 'select(.kind=="Deployment") | .spec.template.spec.containers[0].image'
     expectedResult: "test:1.2.3"
-
-      

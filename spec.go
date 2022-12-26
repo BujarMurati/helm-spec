@@ -17,17 +17,8 @@ type RenderInstructions struct {
 	Values string `json´:"values"`
 	// extra arguments passed through to the helm CLI, i.e. ["--set-file", "foo=foo.txt"]
 	ExtraArgs []string `json:"extraArgs"`
-}
-
-type Assertion struct {
-	// human-readable description of what the assertion tests
-	Description string
-	// a [yq] query to perform against the rendering output
-	// The output will contain all rendered manifests with document separators
-	// [yq]: https://mikefarah.gitbook.io/yq/
-	Query string
-	// a string that the output of the `yq` query must equal in order for the test to pass
-	ExpectedResult string
+	// require rendering to fail for the test to pass
+	ShouldFailToRender bool `json:"shouldFailToRender"`
 }
 
 // a testcase bundles rendering instructions with a list of assertions
