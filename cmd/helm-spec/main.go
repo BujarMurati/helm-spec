@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	errFailedToGetAbsolutePath = "failed to get absolute path of: %v"
-	errNotADirectory           = "%v is not a directory"
-	errNoSpecFilesFound        = "no %v files found in %v"
+	errFailedToGetAbsolutePathTemplate = "failed to get absolute path of: %v"
+	errNotADirectoryTemplate           = "%v is not a directory"
+	errNoSpecFilesFoundTemplate        = "no %v files found in %v"
 	specFileGlobPattern        = "*_spec.yaml"
 )
 
@@ -34,21 +34,21 @@ var defaultSettings = cliSettings{
 func validateTestSuitePath(cCtx *cli.Context, value string) (err error) {
 	absPath, err := filepath.Abs(value)
 	if err != nil {
-		return fmt.Errorf(errFailedToGetAbsolutePath, value)
+		return fmt.Errorf(errFailedToGetAbsolutePathTemplate, value)
 	}
 	info, err := os.Stat(absPath)
 	if err != nil {
 		return err
 	}
 	if !info.IsDir() {
-		return fmt.Errorf(errNotADirectory, absPath)
+		return fmt.Errorf(errNotADirectoryTemplate, absPath)
 	}
 	specFiles, err := filepath.Glob(filepath.Join(absPath, specFileGlobPattern))
 	if err != nil {
 		return err
 	}
 	if len(specFiles) == 0 {
-		return fmt.Errorf(errNoSpecFilesFound, specFileGlobPattern, absPath)
+		return fmt.Errorf(errNoSpecFilesFoundTemplate, specFileGlobPattern, absPath)
 	}
 	return nil
 }
