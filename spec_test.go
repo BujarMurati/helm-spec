@@ -1,7 +1,6 @@
 package helmspec
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -78,6 +77,5 @@ func TestSpecResultShouldSucceedIfAllTestCasesSucceed(t *testing.T) {
 	spec, err := NewSpec("./testdata/charts/example/specs/successful_spec.yaml")
 	assert.NoError(t, err)
 	result := spec.Execute()
-	fmt.Printf("%v", result.TestCaseResults)
 	assert.True(t, result.Succeeded)
 }

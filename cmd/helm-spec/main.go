@@ -85,7 +85,7 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 					if err != nil {
 						return err
 					}
-					report, err := reporter.Report()
+					report, err := reporter.Report("yaml")
 					if err != nil {
 						return err
 					}

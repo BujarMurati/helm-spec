@@ -18,7 +18,7 @@ type errCapture struct {
 
 type mockTestReporter struct{}
 
-func (m mockTestReporter) Report() (string, error) {
+func (m mockTestReporter) Report(outputMode string) (string, error) {
 	return "success!", nil
 }
 
