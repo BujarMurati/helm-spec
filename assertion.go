@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
+	logging "gopkg.in/op/go-logging.v1"
 )
 
 // checks the output of a `yq` query against rendered manifests
@@ -39,4 +40,10 @@ func (a Assertion) Evaluate(manifest string) (result AssertionResult) {
 	result.Assertion = a
 	result.Succeeded = result.ActualResult == a.ExpectedResult
 	return result
+}
+
+func init() {
+	// quiet down the noisy yq logger
+	logger := yqlib.GetLogger()
+	logging.SetLevel(logging.ERROR, logger.Module)
 }
