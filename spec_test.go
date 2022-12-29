@@ -1,6 +1,7 @@
 package helmspec
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -64,4 +65,19 @@ func TestExecuteTestShouldSucceedOnExpectedFailure(t *testing.T) {
 	// should not run or report assertions if we have an error
 	// at the test case level
 	assert.Equal(t, 0, len(result.AssertionResults))
+}
+
+func TestSpecResultShouldNotSucceedIfAnyTestCaseFails(t *testing.T) {
+	spec, err := NewSpec("./testdata/charts/example/specs/example_spec.yaml")
+	assert.NoError(t, err)
+	result := spec.Execute()
+	assert.False(t, result.Succeeded)
+}
+
+func TestSpecResultShouldSucceedIfAllTestCasesSucceed(t *testing.T) {
+	spec, err := NewSpec("./testdata/charts/example/specs/successful_spec.yaml")
+	assert.NoError(t, err)
+	result := spec.Execute()
+	fmt.Printf("%v", result.TestCaseResults)
+	assert.True(t, result.Succeeded)
 }

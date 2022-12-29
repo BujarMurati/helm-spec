@@ -10,6 +10,6 @@ type TestRunner interface {
 
 type HelmTestRunner struct{}
 
-func (runnner *HelmTestRunner) Run(specFiles []string) (rep TestReporter, err error) {
+func (runner *HelmTestRunner) Run(specFiles []string) (rep TestReporter, err error) {
 	return rep, err
 }

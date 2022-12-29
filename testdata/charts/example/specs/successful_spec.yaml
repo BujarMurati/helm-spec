@@ -1,0 +1,31 @@
+title: "template tests for the `example` helm chart"
+chartPath: ".."
+testCases:
+- title: successful
+  render:
+    releaseName: foo
+    namespace: default
+    values: |
+      image:
+        repository: test
+        pullPolicy: Always
+        tag: 1.2.3
+    extraArgs: []
+  assertions:
+  - description: the image should be constructed correctly
+    query: 'select(.kind=="Deployment") | .spec.template.spec.containers[0].image'
+    expectedResult: "test:1.2.3"
+- title: also successful
+  render:
+    releaseName: foo
+    namespace: default
+    values: |
+      ingress:
+        enabled: true
+    extraArgs: []
+    shouldFailToRender: false
+  assertions:
+  - description: an ingress should be rendered
+    query: 'select(.kind=="Ingress") | .metadata.name'
+    expectedResult: "foo-example"
+

@@ -46,11 +46,16 @@ func (t TestCase) Execute(chartPath string) (result TestCaseResult) {
 	for _, assertion := range t.Assertions {
 		r := assertion.Evaluate(result.Manifest)
 		result.AssertionResults = append(result.AssertionResults, r)
-		if !r.Succeeded {
-			result.Succeeded = false
-		}
+		result.Succeeded = result.Succeeded && r.Succeeded
 	}
 	return result
+}
+
+type SpecResult struct {
+	Title string `json:"title"`
+	ChartPath string `json:"chartPath"`
+	Succeeded bool `json:"succeeded"`
+	TestCaseResults []TestCaseResult `json:"testCaseResults"`
 }
 
 // a related group of test cases for the same helm chart
@@ -81,4 +86,16 @@ func NewSpec(filePath string) (spec *HelmSpec, err error) {
 		spec.ChartPath = filepath.Join(filepath.Dir(absFilePath), spec.ChartPath)
 	}
 	return spec, err
+}
+
+func (s HelmSpec) Execute() (result SpecResult) {
+	result.Title = s.Title
+	result.ChartPath = s.ChartPath
+	result.Succeeded = true
+	for _, c := range s.TestCases {
+		r := c.Execute(s.ChartPath)
+		result.Succeeded = result.Succeeded && r.Succeeded
+		result.TestCaseResults = append(result.TestCaseResults, r)
+	}
+	return result
 }
