@@ -1,5 +1,7 @@
 package helmspec
 
+import "sigs.k8s.io/yaml"
+
 const OUTPUT_MODE_YAML = "yaml"
 
 type TestSuiteResult struct {
@@ -16,7 +18,8 @@ type HelmTestReporter struct {
 }
 
 func (r HelmTestReporter) Report(outputMode string) (output string, err error) {
-	return "foo", nil
+	content, err := yaml.Marshal(r.Result)
+	return string(content), err
 }
 
 type TestRunner interface {
