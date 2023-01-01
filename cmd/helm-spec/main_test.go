@@ -18,7 +18,7 @@ type errCapture struct {
 type mockTestReporter struct{}
 
 func (m mockTestReporter) Report(outputMode string) (string, error) {
-	return "success!", nil
+	return outputMode, nil
 }
 
 type mockTestRunner struct {
@@ -114,11 +114,42 @@ func TestTestCommandExecutesTestRunner(t *testing.T) {
 	assert.ElementsMatch(t, []string{filepath.Join(specDir, "example_spec.yaml")}, runner.SpecFiles)
 }
 
-func TestTestCommandsWritesTestReport(t *testing.T) {
-	specDir, err := filepath.Abs("./testdata/specs")
-	assert.NoError(t, err)
-	args := []string{"helm-spec", specDir}
-	_, out, err := testRun(t, args)
-	assert.NoError(t, err)
-	assert.Equal(t, "success!", out.String())
+func TestTestCommandsWritesTestReportWithOutputFormat(t *testing.T) {
+	type testCase struct {
+		value     string
+		expected  string
+		shouldErr bool
+	}
+	testCases := []testCase{
+		{
+			value:    "yaml",
+			expected: "yaml",
+		},
+		{
+			value:    "pretty",
+			expected: "pretty",
+		},
+		{
+			value:    "",
+			expected: "pretty",
+		},
+		{
+			value:     "foo",
+			shouldErr: true,
+		},
+	}
+	for _, c := range testCases {
+		t.Run(c.value, func(t *testing.T) {
+			specDir, err := filepath.Abs("./testdata/specs")
+			assert.NoError(t, err)
+			args := []string{"helm-spec", "-o", c.value, specDir}
+			_, out, err := testRun(t, args)
+			if c.shouldErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, c.expected, out.String())
+			}
+		})
+	}
 }

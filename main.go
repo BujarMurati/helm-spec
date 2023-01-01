@@ -2,7 +2,10 @@ package helmspec
 
 import "sigs.k8s.io/yaml"
 
-const OUTPUT_MODE_YAML = "yaml"
+const OutputFormatYAML = "yaml"
+const OutputFormatPretty = "pretty"
+
+var AllowedOutputFormats = [...]string{OutputFormatYAML, OutputFormatPretty}
 
 type TestSuiteResult struct {
 	Succeeded   bool         `json:"succeeded"`

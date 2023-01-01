@@ -58,12 +58,29 @@ func validateSpecDirPath(value string) (err error) {
 	return nil
 }
 
+func validateOutputFormat(o string) (err error) {
+	for _, f := range helmspec.AllowedOutputFormats {
+		if o == f {
+			return nil
+		}
+	}
+	return fmt.Errorf("output format must be one of `%v`", helmspec.AllowedOutputFormats)
+}
+
 func createApp(settings cliSettings) (app *cli.App, err error) {
 	app = &cli.App{
 		Name:            "helm-spec",
 		Usage:           "automated tests for helm charts",
-		ArgsUsage:       "<spec directory (defaults to \"./specs\")>",
+		ArgsUsage:       "<spec directory (default: \"./specs\")>",
 		HideHelpCommand: true,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "output-format",
+				Aliases: []string{"o"},
+				Value:   "pretty",
+				Usage:   "output format for the report, one of \"pretty\"|\"yaml\"",
+			},
+		},
 		Action: func(cCtx *cli.Context) (err error) {
 			var specDir string
 			if cCtx.Args().Present() {
@@ -74,6 +91,14 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 			if err = validateSpecDirPath(specDir); err != nil {
 				return err
 			}
+			outputFormat := cCtx.String("output-format")
+			if outputFormat == "" {
+				outputFormat = helmspec.OutputFormatPretty
+			}
+			if err = validateOutputFormat(outputFormat); err != nil {
+				return err
+			}
+
 			specFiles, err := filepath.Glob(filepath.Join(specDir, specFileGlobPattern))
 			if err != nil {
 				return err
@@ -82,7 +107,7 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 			if err != nil {
 				return err
 			}
-			report, err := reporter.Report("yaml")
+			report, err := reporter.Report(outputFormat)
 			if err != nil {
 				return err
 			}
