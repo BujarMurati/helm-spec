@@ -60,7 +60,7 @@ func TestSanity(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestAcceptsTestSuitePathArg(t *testing.T) {
+func TestAcceptsSpecDirArg(t *testing.T) {
 	args := []string{"helm-spec", "./testdata/specs"}
 	_, _, err := testRun(t, args)
 	assert.NoError(t, err)
