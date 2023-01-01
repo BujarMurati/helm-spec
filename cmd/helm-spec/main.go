@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -34,14 +35,14 @@ var defaultSettings = cliSettings{
 }
 
 // validates that the path is an existing directory containing spec files
-func validateTestSuitePath(cCtx *cli.Context, value string) (err error) {
+func validateTestSuitePath(value string) (err error) {
 	absPath, err := filepath.Abs(value)
 	if err != nil {
 		return fmt.Errorf(errFailedToGetAbsolutePathTemplate, value)
 	}
 	info, err := os.Stat(absPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("testsuite directory `%v` does not seem to exist: %w", value, err)
 	}
 	if !info.IsDir() {
 		return fmt.Errorf(errNotADirectoryTemplate, absPath)
@@ -72,11 +73,14 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 						DefaultText: "./specs",
 						Required:    false,
 						TakesFile:   false,
-						Action:      validateTestSuitePath,
 					},
 				},
 				Action: func(cCtx *cli.Context) (err error) {
 					specDir := cCtx.Path("testsuite")
+					if err = validateTestSuitePath(specDir); err != nil {
+						return err
+					}
+					fmt.Printf("spec dir: %v", specDir)
 					specFiles, err := filepath.Glob(filepath.Join(specDir, specFileGlobPattern))
 					if err != nil {
 						return err
@@ -105,7 +109,9 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 func main() {
 	app, err := createApp(defaultSettings)
 	if err != nil {
-		panic("failed to initialize app")
+		log.Fatal(err.Error())
 	}
-	app.Run(os.Args)
+	if err = app.Run(os.Args); err != nil {
+		log.Fatal(err.Error())
+	}
 }

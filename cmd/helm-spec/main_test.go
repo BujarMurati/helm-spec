@@ -55,7 +55,7 @@ func testRun(t *testing.T, args []string) (runner *mockTestRunner, out *strings.
 }
 
 func TestHasTestCommand(t *testing.T) {
-	args := []string{"helm-spec", "test"}
+	args := []string{"helm-spec", "test", "--help"}
 	_, _, err := testRun(t, args)
 	assert.NoError(t, err)
 }
