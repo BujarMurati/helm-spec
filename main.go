@@ -1,12 +1,5 @@
 package helmspec
 
-import "sigs.k8s.io/yaml"
-
-const OutputFormatYAML = "yaml"
-const OutputFormatPretty = "pretty"
-
-var AllowedOutputFormats = [...]string{OutputFormatYAML, OutputFormatPretty}
-
 type TestSuiteResult struct {
 	Succeeded   bool         `json:"succeeded"`
 	SpecResults []SpecResult `json:"specResults"`
@@ -14,15 +7,6 @@ type TestSuiteResult struct {
 
 type TestReporter interface {
 	Report(outputMode string) (string, error)
-}
-
-type HelmTestReporter struct {
-	Result TestSuiteResult
-}
-
-func (r HelmTestReporter) Report(outputMode string) (output string, err error) {
-	content, err := yaml.Marshal(r.Result)
-	return string(content), err
 }
 
 type TestRunner interface {
