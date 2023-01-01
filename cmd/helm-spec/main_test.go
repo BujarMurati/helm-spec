@@ -66,7 +66,7 @@ func TestAcceptsTestSuitePathArg(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestValidatesTestArg(t *testing.T) {
+func TestValidatesSpecDirArg(t *testing.T) {
 	type testCase struct {
 		title          string
 		path           string
