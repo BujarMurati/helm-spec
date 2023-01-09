@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -15,6 +16,7 @@ const (
 	errNotADirectoryTemplate           = "%v is not a directory"
 	errNoSpecFilesFoundTemplate        = "no %v files found in %v"
 	specFileGlobPattern                = "*_spec.yaml"
+	defaultSpecDir                     = "./specs"
 )
 
 type cliSettings struct {
@@ -34,14 +36,14 @@ var defaultSettings = cliSettings{
 }
 
 // validates that the path is an existing directory containing spec files
-func validateTestSuitePath(cCtx *cli.Context, value string) (err error) {
+func validateSpecDirPath(value string) (err error) {
 	absPath, err := filepath.Abs(value)
 	if err != nil {
 		return fmt.Errorf(errFailedToGetAbsolutePathTemplate, value)
 	}
 	info, err := os.Stat(absPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("spec directory `%v` does not seem to exist: %w", value, err)
 	}
 	if !info.IsDir() {
 		return fmt.Errorf(errNotADirectoryTemplate, absPath)
@@ -56,43 +58,61 @@ func validateTestSuitePath(cCtx *cli.Context, value string) (err error) {
 	return nil
 }
 
+func validateOutputFormat(o string) (err error) {
+	for _, f := range helmspec.AllowedOutputFormats {
+		if o == f {
+			return nil
+		}
+	}
+	return fmt.Errorf("output format must be one of `%v`", helmspec.AllowedOutputFormats)
+}
+
 func createApp(settings cliSettings) (app *cli.App, err error) {
 	app = &cli.App{
-		Name:           "helm-spec",
-		DefaultCommand: "test",
-		Commands: []*cli.Command{
-			{
-				Name: "test",
-				Flags: []cli.Flag{
-					&cli.PathFlag{
-						Usage:       "path to a directory containing *_spec.yaml files",
-						Name:        "testsuite",
-						Aliases:     []string{"t"},
-						Value:       "./specs",
-						DefaultText: "./specs",
-						Required:    false,
-						TakesFile:   false,
-						Action:      validateTestSuitePath,
-					},
-				},
-				Action: func(cCtx *cli.Context) (err error) {
-					specDir := cCtx.Path("testsuite")
-					specFiles, err := filepath.Glob(filepath.Join(specDir, specFileGlobPattern))
-					if err != nil {
-						return err
-					}
-					reporter, err := settings.TestRunner.Run(specFiles)
-					if err != nil {
-						return err
-					}
-					report, err := reporter.Report()
-					if err != nil {
-						return err
-					}
-					fmt.Fprint(settings.Writer, report)
-					return nil
-				},
+		Name:            "helm-spec",
+		Usage:           "automated tests for helm charts",
+		ArgsUsage:       "<spec directory (default: \"./specs\")>",
+		HideHelpCommand: true,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "output-format",
+				Aliases: []string{"o"},
+				Value:   "pretty",
+				Usage:   "output format for the report, one of \"pretty\"|\"yaml\"",
 			},
+		},
+		Action: func(cCtx *cli.Context) (err error) {
+			var specDir string
+			if cCtx.Args().Present() {
+				specDir = cCtx.Args().First()
+			} else {
+				specDir = defaultSpecDir
+			}
+			if err = validateSpecDirPath(specDir); err != nil {
+				return err
+			}
+			outputFormat := cCtx.String("output-format")
+			if outputFormat == "" {
+				outputFormat = helmspec.OutputFormatPretty
+			}
+			if err = validateOutputFormat(outputFormat); err != nil {
+				return err
+			}
+
+			specFiles, err := filepath.Glob(filepath.Join(specDir, specFileGlobPattern))
+			if err != nil {
+				return err
+			}
+			reporter, err := settings.TestRunner.Run(specFiles)
+			if err != nil {
+				return err
+			}
+			report, err := reporter.Report(outputFormat)
+			if err != nil {
+				return err
+			}
+			fmt.Fprint(settings.Writer, report)
+			return nil
 		},
 		Reader:         settings.Reader,
 		Writer:         settings.Writer,
@@ -105,7 +125,9 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 func main() {
 	app, err := createApp(defaultSettings)
 	if err != nil {
-		panic("failed to initialize app")
+		log.Fatal(err.Error())
 	}
-	app.Run(os.Args)
+	if err = app.Run(os.Args); err != nil {
+		log.Fatal(err.Error())
+	}
 }

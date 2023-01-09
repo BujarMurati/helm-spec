@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -18,8 +17,8 @@ type errCapture struct {
 
 type mockTestReporter struct{}
 
-func (m mockTestReporter) Report() (string, error) {
-	return "success!", nil
+func (m mockTestReporter) Report(outputMode string) (string, error) {
+	return outputMode, nil
 }
 
 type mockTestRunner struct {
@@ -54,19 +53,20 @@ func testRun(t *testing.T, args []string) (runner *mockTestRunner, out *strings.
 	return runner, out, app.Run(args)
 }
 
-func TestHasTestCommand(t *testing.T) {
-	args := []string{"helm-spec", "test"}
+// just a sanity check to fail fast if something is utterly broken
+func TestSanity(t *testing.T) {
+	args := []string{"helm-spec", "--help"}
 	_, _, err := testRun(t, args)
 	assert.NoError(t, err)
 }
 
-func TestAcceptsTestSuitePathFlag(t *testing.T) {
-	args := []string{"helm-spec", "test", "--testsuite=./testdata/specs"}
+func TestAcceptsSpecDirArg(t *testing.T) {
+	args := []string{"helm-spec", "./testdata/specs"}
 	_, _, err := testRun(t, args)
 	assert.NoError(t, err)
 }
 
-func TestValidatesTestSuitePath(t *testing.T) {
+func TestValidatesSpecDirArg(t *testing.T) {
 	type testCase struct {
 		title          string
 		path           string
@@ -93,7 +93,7 @@ func TestValidatesTestSuitePath(t *testing.T) {
 
 	for _, c := range testCases {
 		t.Run(c.title, func(t *testing.T) {
-			args := []string{"helm-spec", "test", fmt.Sprintf("--t=%v", c.path)}
+			args := []string{"helm-spec", c.path}
 			_, _, err := testRun(t, args)
 			if c.valid {
 				assert.NoError(t, err)
@@ -107,18 +107,49 @@ func TestValidatesTestSuitePath(t *testing.T) {
 func TestTestCommandExecutesTestRunner(t *testing.T) {
 	specDir, err := filepath.Abs("./testdata/specs")
 	assert.NoError(t, err)
-	args := []string{"helm-spec", "test", fmt.Sprintf("-t=%v", specDir)}
+	args := []string{"helm-spec", specDir}
 	runner, _, err := testRun(t, args)
 	assert.NoError(t, err)
 	assert.True(t, runner.HasRun)
 	assert.ElementsMatch(t, []string{filepath.Join(specDir, "example_spec.yaml")}, runner.SpecFiles)
 }
 
-func TestTestCommandsWritesTestReport(t *testing.T) {
-	specDir, err := filepath.Abs("./testdata/specs")
-	assert.NoError(t, err)
-	args := []string{"helm-spec", "test", fmt.Sprintf("-t=%v", specDir)}
-	_, out, err := testRun(t, args)
-	assert.NoError(t, err)
-	assert.Equal(t, "success!", out.String())
+func TestTestCommandsWritesTestReportWithOutputFormat(t *testing.T) {
+	type testCase struct {
+		value     string
+		expected  string
+		shouldErr bool
+	}
+	testCases := []testCase{
+		{
+			value:    "yaml",
+			expected: "yaml",
+		},
+		{
+			value:    "pretty",
+			expected: "pretty",
+		},
+		{
+			value:    "",
+			expected: "pretty",
+		},
+		{
+			value:     "foo",
+			shouldErr: true,
+		},
+	}
+	for _, c := range testCases {
+		t.Run(c.value, func(t *testing.T) {
+			specDir, err := filepath.Abs("./testdata/specs")
+			assert.NoError(t, err)
+			args := []string{"helm-spec", "-o", c.value, specDir}
+			_, out, err := testRun(t, args)
+			if c.shouldErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, c.expected, out.String())
+			}
+		})
+	}
 }

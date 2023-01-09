@@ -1,0 +1,51 @@
+title: "template tests for the `example` helm chart"
+chartPath: ".."
+testCases:
+- title: when overwriting the image field
+  render:
+    releaseName: foo
+    namespace: default
+    values: |
+      image:
+        repository: test
+        pullPolicy: Always
+        tag: 1.2.3
+    extraArgs: []
+    shouldFailToRender: false
+  assertions:
+  - description: the image should be constructed correctly
+    query: 'select(.kind=="Deployment") | .spec.template.spec.containers[0].image'
+    expectedResult: "test:1.2.3"
+- title: partially failing test case
+  render:
+    releaseName: foo
+    namespace: default
+    values: |
+      image:
+        repository: test
+        pullPolicy: Always
+        tag: 1.2.3
+    extraArgs: []
+    shouldFailToRender: false
+  assertions:
+  - description: the image should be constructed correctly
+    query: 'select(.kind=="Deployment") | .spec.template.spec.containers[0].image'
+    expectedResult: "test:1.2.3"
+  - description: this will fail
+    query: 'select(.kind=="Deployment") | .spec.template.spec.containers[0].image'
+    expectedResult: "an unreasonable expectation"
+- title: expected rendering failure
+  render:
+    releaseName: foo
+    namespace: default
+    values: |
+      image:
+        repository: test
+        pullPolicy: Always
+        tag: 1.2.3
+    extraArgs: []
+    shouldFailToRender: true
+  assertions:
+  - description: the image should be constructed correctly
+    query: 'select(.kind=="Deployment") | .spec.template.spec.containers[0].image'
+    expectedResult: "test:1.2.3"
