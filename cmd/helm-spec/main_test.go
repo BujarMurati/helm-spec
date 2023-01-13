@@ -21,6 +21,28 @@ type mockTestRunner struct {
 	HasRun    bool
 }
 
+type testCLISettings struct {
+	cliSettings
+	*errCapture
+}
+
+func newTestCLISettings() testCLISettings {
+	e := &errCapture{}
+	return testCLISettings{
+		cliSettings{
+			Reader:    strings.NewReader(""),
+			Writer:    &strings.Builder{},
+			ErrWriter: &strings.Builder{},
+			ExitErrHandler: func(cCtx *cli.Context, err error) {
+				e.Ctx = cCtx
+				e.Err = err
+			},
+			TestRunner: &mockTestRunner{},
+		},
+		e,
+	}
+}
+
 func (m *mockTestRunner) Run(specFiles []string) (r helmspec.TestSuiteResult, err error) {
 	m.SpecFiles = specFiles
 	m.HasRun = true
@@ -28,36 +50,24 @@ func (m *mockTestRunner) Run(specFiles []string) (r helmspec.TestSuiteResult, er
 }
 
 // runs the CLI with args. Outputs and errors  are captured
-func testRun(t *testing.T, args []string) (runner *mockTestRunner, out *strings.Builder, err error) {
+func testRun(t *testing.T, args []string) (settings testCLISettings, err error) {
 	t.Helper()
-	e := &errCapture{}
-	runner = &mockTestRunner{}
-	out = &strings.Builder{}
-	settings := cliSettings{
-		Reader:    strings.NewReader(""),
-		Writer:    out,
-		ErrWriter: out,
-		ExitErrHandler: func(cCtx *cli.Context, err error) {
-			e.Ctx = cCtx
-			e.Err = err
-		},
-		TestRunner: runner,
-	}
-	app, err := createApp(settings)
+	settings = newTestCLISettings()
+	app, err := createApp(settings.cliSettings)
 	assert.NoError(t, err)
-	return runner, out, app.Run(args)
+	return settings, app.Run(args)
 }
 
 // just a sanity check to fail fast if something is utterly broken
 func TestSanity(t *testing.T) {
 	args := []string{"helm-spec", "--help"}
-	_, _, err := testRun(t, args)
+	_, err := testRun(t, args)
 	assert.NoError(t, err)
 }
 
 func TestAcceptsSpecDirArg(t *testing.T) {
 	args := []string{"helm-spec", "./testdata/specs"}
-	_, _, err := testRun(t, args)
+	_, err := testRun(t, args)
 	assert.NoError(t, err)
 }
 
@@ -89,7 +99,7 @@ func TestValidatesSpecDirArg(t *testing.T) {
 	for _, c := range testCases {
 		t.Run(c.title, func(t *testing.T) {
 			args := []string{"helm-spec", c.path}
-			_, _, err := testRun(t, args)
+			_, err := testRun(t, args)
 			if c.valid {
 				assert.NoError(t, err)
 			} else {
@@ -103,8 +113,8 @@ func TestTestCommandExecutesTestRunner(t *testing.T) {
 	specDir, err := filepath.Abs("./testdata/specs")
 	assert.NoError(t, err)
 	args := []string{"helm-spec", specDir}
-	runner, _, err := testRun(t, args)
+	settings, err := testRun(t, args)
 	assert.NoError(t, err)
-	assert.True(t, runner.HasRun)
-	assert.ElementsMatch(t, []string{filepath.Join(specDir, "example_spec.yaml")}, runner.SpecFiles)
+	assert.True(t, settings.TestRunner.(*mockTestRunner).HasRun)
+	assert.ElementsMatch(t, []string{filepath.Join(specDir, "example_spec.yaml")}, settings.TestRunner.(*mockTestRunner).SpecFiles)
 }
