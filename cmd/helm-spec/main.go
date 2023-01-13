@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	helmspec "github.com/bujarmurati/helm-spec"
+	"github.com/bujarmurati/helm-spec/internal/helmspec"
 	"github.com/urfave/cli/v2"
 )
 
