@@ -16,9 +16,9 @@ func TestTestReporterOutputModeYaml(t *testing.T) {
 		Succeeded:   true,
 		SpecResults: []helmspec.SpecResult{result},
 	}
-	reporter := HelmTestReporter{Result: testSuiteResult}
+	reporter := HelmTestReporter{}
 	settings := TestReportSettings{OutputFormat: "yaml"}
-	output, err := reporter.Report(settings)
+	output, err := reporter.Report(testSuiteResult, settings)
 	assert.NoError(t, err)
 	reportedResult := &helmspec.TestSuiteResult{}
 	yaml.Unmarshal([]byte(output), reportedResult)
@@ -34,9 +34,9 @@ func TestReporterOutputModePretty(t *testing.T) {
 		Succeeded:   true,
 		SpecResults: []helmspec.SpecResult{result},
 	}
-	reporter := HelmTestReporter{Result: testSuiteResult}
+	reporter := HelmTestReporter{}
 	settings := TestReportSettings{OutputFormat: "pretty"}
-	_, err = reporter.Report(settings)
+	_, err = reporter.Report(testSuiteResult, settings)
 	assert.NoError(t, err)
 }
 

@@ -24,12 +24,10 @@ type TestReportSettings struct {
 }
 
 type TestReporter interface {
-	Report(settings TestReportSettings) (string, error)
+	Report(result helmspec.TestSuiteResult, settings TestReportSettings) (string, error)
 }
 
-type HelmTestReporter struct {
-	Result helmspec.TestSuiteResult
-}
+type HelmTestReporter struct{}
 
 // returns color-coded `passed` or `failed`
 func passOrFail(succeeded bool) string {
@@ -55,14 +53,14 @@ func treeIndent(content string, treeLevel int, verticalContinuationsAtLevels []i
 	return strings.Join(indentedLines, "\n")
 }
 
-func (r HelmTestReporter) Report(settings TestReportSettings) (output string, err error) {
+func (r HelmTestReporter) Report(result helmspec.TestSuiteResult, settings TestReportSettings) (output string, err error) {
 	switch settings.OutputFormat {
 	case OutputFormatYAML:
-		content, err := yaml.Marshal(r.Result)
+		content, err := yaml.Marshal(result)
 		return string(content), err
 	case OutputFormatPretty:
 		resultTree := pterm.LeveledList{}
-		for specIndex, specResult := range r.Result.SpecResults {
+		for specIndex, specResult := range result.SpecResults {
 			resultTree = append(resultTree, pterm.LeveledListItem{
 				Level: 0,
 				Text:  fmt.Sprintf("spec `%v`: %v", specResult.Title, passOrFail(specResult.Succeeded)),
@@ -100,7 +98,7 @@ func (r HelmTestReporter) Report(settings TestReportSettings) (output string, er
 				}
 				if !testCaseResult.Succeeded {
 					verticalContinuationsAtLevels := []int{}
-					isLastSpec := specIndex+1 == len(r.Result.SpecResults)
+					isLastSpec := specIndex+1 == len(result.SpecResults)
 					if !isLastSpec {
 						verticalContinuationsAtLevels = append(verticalContinuationsAtLevels, 0)
 					}

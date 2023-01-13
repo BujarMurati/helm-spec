@@ -27,6 +27,7 @@ type cliSettings struct {
 	ErrWriter      io.Writer
 	ExitErrHandler cli.ExitErrHandlerFunc
 	TestRunner     helmspec.TestRunner
+	TestReporter   testreport.TestReporter
 }
 
 var defaultSettings = cliSettings{
@@ -35,6 +36,7 @@ var defaultSettings = cliSettings{
 	ErrWriter:      os.Stderr,
 	ExitErrHandler: nil,
 	TestRunner:     &helmspec.HelmTestRunner{},
+	TestReporter:   testreport.HelmTestReporter{},
 }
 
 // validates that the path is an existing directory containing spec files
@@ -110,7 +112,7 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 				return err
 			}
 			reportSettings := testreport.TestReportSettings{OutputFormat: outputFormat, UseColor: true}
-			report, err := testreport.HelmTestReporter{Result: result}.Report(reportSettings)
+			report, err := settings.TestReporter.Report(result, reportSettings)
 			if err != nil {
 				return err
 			}
