@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -113,6 +114,9 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 				return err
 			}
 			fmt.Fprint(settings.Writer, report)
+			if !result.Succeeded {
+				return errors.New("test suite failed")
+			}
 			return nil
 		},
 		Reader:         settings.Reader,

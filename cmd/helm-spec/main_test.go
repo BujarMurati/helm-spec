@@ -28,6 +28,8 @@ type testCLISettings struct {
 
 func newTestCLISettings() testCLISettings {
 	e := &errCapture{}
+	runner := &mockTestRunner{}
+	runner.Result.Succeeded = true
 	return testCLISettings{
 		cliSettings{
 			Reader:    strings.NewReader(""),
@@ -37,7 +39,7 @@ func newTestCLISettings() testCLISettings {
 				e.Ctx = cCtx
 				e.Err = err
 			},
-			TestRunner: &mockTestRunner{},
+			TestRunner: runner,
 		},
 		e,
 	}
@@ -117,4 +119,16 @@ func TestTestCommandExecutesTestRunner(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, settings.TestRunner.(*mockTestRunner).HasRun)
 	assert.ElementsMatch(t, []string{filepath.Join(specDir, "example_spec.yaml")}, settings.TestRunner.(*mockTestRunner).SpecFiles)
+}
+
+func TestExitCodeOnFailure(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", specDir}
+	settings := newTestCLISettings()
+	settings.TestRunner.(*mockTestRunner).Result.Succeeded = false
+	app, err := createApp(settings.cliSettings)
+	assert.NoError(t, err)
+	err = app.Run(args)
+	assert.Error(t, err)
 }
