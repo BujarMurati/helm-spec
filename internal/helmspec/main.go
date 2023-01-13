@@ -5,10 +5,6 @@ type TestSuiteResult struct {
 	SpecResults []SpecResult `json:"specResults"`
 }
 
-type TestReporter interface {
-	Report(outputMode string) (string, error)
-}
-
 type TestRunner interface {
 	Run(specFiles []string) (TestSuiteResult, error)
 }

@@ -18,6 +18,15 @@ var treeVerticalString = pterm.DefaultTree.TreeStyle.Sprint(pterm.DefaultTree.Ve
 
 var AllowedOutputFormats = [...]string{OutputFormatYAML, OutputFormatPretty}
 
+type TestReportSettings struct {
+	OutputFormat string
+	UseColor     bool
+}
+
+type TestReporter interface {
+	Report(settings TestReportSettings) (string, error)
+}
+
 type HelmTestReporter struct {
 	Result helmspec.TestSuiteResult
 }
@@ -46,12 +55,12 @@ func treeIndent(content string, treeLevel int, verticalContinuationsAtLevels []i
 	return strings.Join(indentedLines, "\n")
 }
 
-func (r HelmTestReporter) Report(outputFormat string) (output string, err error) {
-	switch {
-	case outputFormat == OutputFormatYAML:
+func (r HelmTestReporter) Report(settings TestReportSettings) (output string, err error) {
+	switch settings.OutputFormat {
+	case OutputFormatYAML:
 		content, err := yaml.Marshal(r.Result)
 		return string(content), err
-	case outputFormat == OutputFormatPretty:
+	case OutputFormatPretty:
 		resultTree := pterm.LeveledList{}
 		for specIndex, specResult := range r.Result.SpecResults {
 			resultTree = append(resultTree, pterm.LeveledListItem{
@@ -112,6 +121,6 @@ func (r HelmTestReporter) Report(outputFormat string) (output string, err error)
 		root := putils.TreeFromLeveledList(resultTree)
 		return pterm.DefaultTree.WithIndent(treeIndentationLevel).WithRoot(root).Srender()
 	default:
-		return "", fmt.Errorf("unsupported output format `%v`", outputFormat)
+		return "", fmt.Errorf("unsupported output format `%v`", settings.OutputFormat)
 	}
 }

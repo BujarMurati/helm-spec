@@ -109,7 +109,8 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 			if err != nil {
 				return err
 			}
-			report, err := testreport.HelmTestReporter{Result: result}.Report(outputFormat)
+			reportSettings := testreport.TestReportSettings{OutputFormat: outputFormat, UseColor: true}
+			report, err := testreport.HelmTestReporter{Result: result}.Report(reportSettings)
 			if err != nil {
 				return err
 			}
