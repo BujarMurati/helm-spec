@@ -103,11 +103,11 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 			if err != nil {
 				return err
 			}
-			reporter, err := settings.TestRunner.Run(specFiles)
+			result, err := settings.TestRunner.Run(specFiles)
 			if err != nil {
 				return err
 			}
-			report, err := reporter.Report(outputFormat)
+			report, err := helmspec.HelmTestReporter{Result: result}.Report(outputFormat)
 			if err != nil {
 				return err
 			}
