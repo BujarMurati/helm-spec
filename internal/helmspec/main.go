@@ -15,16 +15,16 @@ type TestRunner interface {
 
 type HelmTestRunner struct{}
 
-func (runner HelmTestRunner) Run(specFiles []string) (res TestSuiteResult, err error) {
+func (runner HelmTestRunner) Run(specFiles []string) (result TestSuiteResult, err error) {
 	specs := []*HelmSpec{}
 	for _, f := range specFiles {
 		spec, err := NewSpec(f)
 		if err != nil {
-			return res, err
+			return result, err
 		}
 		specs = append(specs, spec)
 	}
-	result := TestSuiteResult{
+	result = TestSuiteResult{
 		Succeeded: true,
 	}
 	for _, spec := range specs {
@@ -32,5 +32,5 @@ func (runner HelmTestRunner) Run(specFiles []string) (res TestSuiteResult, err e
 		result.Succeeded = result.Succeeded && r.Succeeded
 		result.SpecResults = append(result.SpecResults, r)
 	}
-	return res, err
+	return result, err
 }

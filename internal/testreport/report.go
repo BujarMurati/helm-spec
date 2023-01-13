@@ -1,9 +1,10 @@
-package helmspec
+package testreport
 
 import (
 	"fmt"
 	"strings"
 
+	"github.com/bujarmurati/helm-spec/internal/helmspec"
 	"github.com/pterm/pterm"
 	"github.com/pterm/pterm/putils"
 	"sigs.k8s.io/yaml"
@@ -18,7 +19,7 @@ var treeVerticalString = pterm.DefaultTree.TreeStyle.Sprint(pterm.DefaultTree.Ve
 var AllowedOutputFormats = [...]string{OutputFormatYAML, OutputFormatPretty}
 
 type HelmTestReporter struct {
-	Result TestSuiteResult
+	Result helmspec.TestSuiteResult
 }
 
 // returns color-coded `passed` or `failed`

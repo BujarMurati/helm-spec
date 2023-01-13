@@ -15,12 +15,6 @@ type errCapture struct {
 	Err error
 }
 
-type mockTestReporter struct{}
-
-func (m mockTestReporter) Report(outputMode string) (string, error) {
-	return outputMode, nil
-}
-
 type mockTestRunner struct {
 	Result    helmspec.TestSuiteResult
 	SpecFiles []string
