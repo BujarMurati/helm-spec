@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -142,4 +143,41 @@ func TestExitCodeOnFailure(t *testing.T) {
 	assert.NoError(t, err)
 	err = app.Run(args)
 	assert.Error(t, err)
+}
+
+func TestReportPrettyWithColorByDefault(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", specDir}
+	settings, err := testRun(t, args)
+	assert.NoError(t, err)
+	reportSettings := settings.TestReporter.(*mockTestReporter).Settings
+	assert.True(t, reportSettings.UseColor)
+	assert.Equal(t, testreport.OutputFormatPretty, reportSettings.OutputFormat)
+}
+
+func TestDisableColorOutputViaFlag(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", "--no-color", specDir}
+	settings, err := testRun(t, args)
+	assert.NoError(t, err)
+	reportSettings := settings.TestReporter.(*mockTestReporter).Settings
+	assert.False(t, reportSettings.UseColor)
+}
+
+func TestDisableColorOutputViaEnv(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", specDir}
+	for _, env := range []string{"NO_COLOR", "HELM_SPEC_NO_COLOR"} {
+		t.Run(env, func(t *testing.T) {
+			os.Setenv(env, "")
+			defer os.Unsetenv(env)
+			settings, err := testRun(t, args)
+			assert.NoError(t, err)
+			reportSettings := settings.TestReporter.(*mockTestReporter).Settings
+			assert.False(t, reportSettings.UseColor)
+		})
+	}
 }

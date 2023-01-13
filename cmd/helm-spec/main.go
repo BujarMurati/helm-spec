@@ -71,6 +71,14 @@ func validateOutputFormat(o string) (err error) {
 	return fmt.Errorf("output format must be one of `%v`", testreport.AllowedOutputFormats)
 }
 
+// see https://clig.dev/#output
+func isColorDisabled(cCtx *cli.Context) bool {
+	_, isNoColorSet := os.LookupEnv("NO_COLOR")
+	_, isHelmSpecNoColorSet := os.LookupEnv("HELM_SPEC_NO_COLOR")
+	isTerminalDumb := os.Getenv("TERM") == "dumb"
+	return cCtx.Bool("no-color") || isNoColorSet || isHelmSpecNoColorSet || isTerminalDumb
+}
+
 func createApp(settings cliSettings) (app *cli.App, err error) {
 	app = &cli.App{
 		Name:            "helm-spec",
@@ -83,6 +91,11 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 				Aliases: []string{"o"},
 				Value:   "pretty",
 				Usage:   "output format for the report, one of \"pretty\"|\"yaml\"",
+			},
+			&cli.BoolFlag{
+				Name:  "no-color",
+				Value: false,
+				Usage: "disable colorful output",
 			},
 		},
 		Action: func(cCtx *cli.Context) (err error) {
@@ -111,7 +124,10 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 			if err != nil {
 				return err
 			}
-			reportSettings := testreport.TestReportSettings{OutputFormat: outputFormat, UseColor: true}
+			reportSettings := testreport.TestReportSettings{
+				OutputFormat: outputFormat,
+				UseColor:     !isColorDisabled(cCtx),
+			}
 			report, err := settings.TestReporter.Report(result, reportSettings)
 			if err != nil {
 				return err
