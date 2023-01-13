@@ -10,21 +10,21 @@ type TestReporter interface {
 }
 
 type TestRunner interface {
-	Run(specFiles []string) (TestReporter, error)
+	Run(specFiles []string) (TestSuiteResult, error)
 }
 
 type HelmTestRunner struct{}
 
-func (runner HelmTestRunner) Run(specFiles []string) (rep TestReporter, err error) {
+func (runner HelmTestRunner) Run(specFiles []string) (result TestSuiteResult, err error) {
 	specs := []*HelmSpec{}
 	for _, f := range specFiles {
 		spec, err := NewSpec(f)
 		if err != nil {
-			return nil, err
+			return result, err
 		}
 		specs = append(specs, spec)
 	}
-	result := TestSuiteResult{
+	result = TestSuiteResult{
 		Succeeded: true,
 	}
 	for _, spec := range specs {
@@ -32,8 +32,5 @@ func (runner HelmTestRunner) Run(specFiles []string) (rep TestReporter, err erro
 		result.Succeeded = result.Succeeded && r.Succeeded
 		result.SpecResults = append(result.SpecResults, r)
 	}
-	rep = HelmTestReporter{
-		Result: result,
-	}
-	return rep, err
+	return result, err
 }

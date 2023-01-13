@@ -8,9 +8,9 @@ import (
 
 func TestHelmTestRunner(t *testing.T) {
 	specFiles := []string{"./testdata/charts/example/specs/example_spec.yaml", "./testdata/charts/example/specs/successful_spec.yaml"}
-	reporter, err := HelmTestRunner{}.Run(specFiles)
+	result, err := HelmTestRunner{}.Run(specFiles)
 	assert.NoError(t, err)
-	assert.NotNil(t, reporter)
+	assert.NotNil(t, result)
 }
 
 func TestHelmTestRunnerAbortsIfItFailsToLoadAnySpec(t *testing.T) {

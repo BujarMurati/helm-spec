@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	helmspec "github.com/bujarmurati/helm-spec"
+	"github.com/bujarmurati/helm-spec/internal/helmspec"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 )
@@ -15,21 +15,16 @@ type errCapture struct {
 	Err error
 }
 
-type mockTestReporter struct{}
-
-func (m mockTestReporter) Report(outputMode string) (string, error) {
-	return outputMode, nil
-}
-
 type mockTestRunner struct {
+	Result    helmspec.TestSuiteResult
 	SpecFiles []string
 	HasRun    bool
 }
 
-func (m *mockTestRunner) Run(specFiles []string) (r helmspec.TestReporter, err error) {
+func (m *mockTestRunner) Run(specFiles []string) (r helmspec.TestSuiteResult, err error) {
 	m.SpecFiles = specFiles
 	m.HasRun = true
-	return mockTestReporter{}, nil
+	return m.Result, nil
 }
 
 // runs the CLI with args. Outputs and errors  are captured
@@ -112,44 +107,4 @@ func TestTestCommandExecutesTestRunner(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, runner.HasRun)
 	assert.ElementsMatch(t, []string{filepath.Join(specDir, "example_spec.yaml")}, runner.SpecFiles)
-}
-
-func TestTestCommandsWritesTestReportWithOutputFormat(t *testing.T) {
-	type testCase struct {
-		value     string
-		expected  string
-		shouldErr bool
-	}
-	testCases := []testCase{
-		{
-			value:    "yaml",
-			expected: "yaml",
-		},
-		{
-			value:    "pretty",
-			expected: "pretty",
-		},
-		{
-			value:    "",
-			expected: "pretty",
-		},
-		{
-			value:     "foo",
-			shouldErr: true,
-		},
-	}
-	for _, c := range testCases {
-		t.Run(c.value, func(t *testing.T) {
-			specDir, err := filepath.Abs("./testdata/specs")
-			assert.NoError(t, err)
-			args := []string{"helm-spec", "-o", c.value, specDir}
-			_, out, err := testRun(t, args)
-			if c.shouldErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, c.expected, out.String())
-			}
-		})
-	}
 }

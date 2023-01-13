@@ -7,7 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	helmspec "github.com/bujarmurati/helm-spec"
+	"github.com/bujarmurati/helm-spec/internal/helmspec"
+	"github.com/bujarmurati/helm-spec/internal/testreport"
 	"github.com/urfave/cli/v2"
 )
 
@@ -59,12 +60,12 @@ func validateSpecDirPath(value string) (err error) {
 }
 
 func validateOutputFormat(o string) (err error) {
-	for _, f := range helmspec.AllowedOutputFormats {
+	for _, f := range testreport.AllowedOutputFormats {
 		if o == f {
 			return nil
 		}
 	}
-	return fmt.Errorf("output format must be one of `%v`", helmspec.AllowedOutputFormats)
+	return fmt.Errorf("output format must be one of `%v`", testreport.AllowedOutputFormats)
 }
 
 func createApp(settings cliSettings) (app *cli.App, err error) {
@@ -93,7 +94,7 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 			}
 			outputFormat := cCtx.String("output-format")
 			if outputFormat == "" {
-				outputFormat = helmspec.OutputFormatPretty
+				outputFormat = testreport.OutputFormatPretty
 			}
 			if err = validateOutputFormat(outputFormat); err != nil {
 				return err
@@ -103,11 +104,11 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 			if err != nil {
 				return err
 			}
-			reporter, err := settings.TestRunner.Run(specFiles)
+			result, err := settings.TestRunner.Run(specFiles)
 			if err != nil {
 				return err
 			}
-			report, err := reporter.Report(outputFormat)
+			report, err := testreport.HelmTestReporter{Result: result}.Report(outputFormat)
 			if err != nil {
 				return err
 			}
