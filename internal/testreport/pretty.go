@@ -81,13 +81,17 @@ func prettyTestCaseReport(result helmspec.TestCaseResult, settings TestReportSet
 		report += "\n"
 		report += assertionReport
 	}
-	if settings.Verbose {
+	if !result.Succeeded && settings.Verbose {
 		manifestLines := strings.Split(result.Manifest, "\n")
 		for idx, line := range manifestLines {
 			manifestLines[idx] = strings.Repeat(" ", 12) + line
 		}
 		report += "\n" + strings.Repeat(" ", 8) + "\U0001f4a1 manifest:\n"
 		report += strings.Join(manifestLines, "\n")
+		if result.Error != nil {
+			report += "\n" + strings.Repeat(" ", 8) + "\u26a0\ufe0f error:\n"
+			report += strings.Repeat(" ", 12) + result.Error.Error() + "\n"
+		}
 	}
 	return report, err
 }
@@ -102,12 +106,13 @@ func prettySpecReport(result helmspec.SpecResult, settings TestReportSettings) (
 
 	report := fmt.Sprintf("%v - %v", status, result.Title)
 	for _, c := range result.TestCaseResults {
-		assertionReport, err := prettyTestCaseReport(c, settings)
+		testCaseReport, err := prettyTestCaseReport(c, settings)
 		if err != nil {
 			return report, nil
 		}
 		report += "\n"
-		report += assertionReport
+		report += testCaseReport
 	}
+	report += "\n"
 	return report, nil
 }

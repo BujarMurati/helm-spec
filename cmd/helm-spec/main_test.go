@@ -181,3 +181,13 @@ func TestDisableColorOutputViaEnv(t *testing.T) {
 		})
 	}
 }
+
+func TestVerboseMode(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", "--verbose", specDir}
+	settings, err := testRun(t, args)
+	assert.NoError(t, err)
+	reportSettings := settings.TestReporter.(*mockTestReporter).Settings
+	assert.True(t, reportSettings.Verbose)
+}

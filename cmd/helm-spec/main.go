@@ -97,6 +97,11 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 				Value: false,
 				Usage: "disable colorful output",
 			},
+			&cli.BoolFlag{
+				Name:  "verbose",
+				Value: false,
+				Usage: "verbose output includes rendered manifests for failed test cases",
+			},
 		},
 		Action: func(cCtx *cli.Context) (err error) {
 			var specDir string
@@ -127,6 +132,7 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 			reportSettings := testreport.TestReportSettings{
 				OutputFormat: outputFormat,
 				UseColor:     !isColorDisabled(cCtx),
+				Verbose:      cCtx.Bool("verbose"),
 			}
 			report, err := settings.TestReporter.Report(result, reportSettings)
 			if err != nil {

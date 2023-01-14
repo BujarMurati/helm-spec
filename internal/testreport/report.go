@@ -47,6 +47,9 @@ func (r HelmTestReporter) Report(result helmspec.TestSuiteResult, settings TestR
 			}
 			report += r
 		}
+		if !settings.Verbose {
+			report += "\n\n\U0001f50d use the `--verbose` flag to view rendered manifests for failed test cases\n\n"
+		}
 		return report, nil
 	default:
 		return "", fmt.Errorf("unsupported output format `%v`", settings.OutputFormat)
