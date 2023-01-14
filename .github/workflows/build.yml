@@ -9,8 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - run: brew install helm
-      name: Install helm
     - name: Install GoReleaser
       uses: goreleaser/goreleaser-action@v4
       with:
