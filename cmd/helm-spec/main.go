@@ -27,6 +27,7 @@ type cliSettings struct {
 	ErrWriter      io.Writer
 	ExitErrHandler cli.ExitErrHandlerFunc
 	TestRunner     helmspec.TestRunner
+	TestReporter   testreport.TestReporter
 }
 
 var defaultSettings = cliSettings{
@@ -35,6 +36,7 @@ var defaultSettings = cliSettings{
 	ErrWriter:      os.Stderr,
 	ExitErrHandler: nil,
 	TestRunner:     &helmspec.HelmTestRunner{},
+	TestReporter:   testreport.HelmTestReporter{},
 }
 
 // validates that the path is an existing directory containing spec files
@@ -69,6 +71,14 @@ func validateOutputFormat(o string) (err error) {
 	return fmt.Errorf("output format must be one of `%v`", testreport.AllowedOutputFormats)
 }
 
+// see https://clig.dev/#output
+func isColorDisabled(cCtx *cli.Context) bool {
+	_, isNoColorSet := os.LookupEnv("NO_COLOR")
+	_, isHelmSpecNoColorSet := os.LookupEnv("HELM_SPEC_NO_COLOR")
+	isTerminalDumb := os.Getenv("TERM") == "dumb"
+	return cCtx.Bool("no-color") || isNoColorSet || isHelmSpecNoColorSet || isTerminalDumb
+}
+
 func createApp(settings cliSettings) (app *cli.App, err error) {
 	app = &cli.App{
 		Name:            "helm-spec",
@@ -81,6 +91,16 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 				Aliases: []string{"o"},
 				Value:   "pretty",
 				Usage:   "output format for the report, one of \"pretty\"|\"yaml\"",
+			},
+			&cli.BoolFlag{
+				Name:  "no-color",
+				Value: false,
+				Usage: "disable colorful output",
+			},
+			&cli.BoolFlag{
+				Name:  "verbose",
+				Value: false,
+				Usage: "verbose output includes rendered manifests for failed test cases",
 			},
 		},
 		Action: func(cCtx *cli.Context) (err error) {
@@ -109,7 +129,12 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 			if err != nil {
 				return err
 			}
-			report, err := testreport.HelmTestReporter{Result: result}.Report(outputFormat)
+			reportSettings := testreport.TestReportSettings{
+				OutputFormat: outputFormat,
+				UseColor:     !isColorDisabled(cCtx),
+				Verbose:      cCtx.Bool("verbose"),
+			}
+			report, err := settings.TestReporter.Report(result, reportSettings)
 			if err != nil {
 				return err
 			}

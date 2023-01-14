@@ -1,11 +1,13 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/bujarmurati/helm-spec/internal/helmspec"
+	"github.com/bujarmurati/helm-spec/internal/testreport"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 )
@@ -19,6 +21,21 @@ type mockTestRunner struct {
 	Result    helmspec.TestSuiteResult
 	SpecFiles []string
 	HasRun    bool
+}
+
+func (m *mockTestRunner) Run(specFiles []string) (r helmspec.TestSuiteResult, err error) {
+	m.SpecFiles = specFiles
+	m.HasRun = true
+	return m.Result, nil
+}
+
+type mockTestReporter struct {
+	Settings testreport.TestReportSettings
+}
+
+func (m *mockTestReporter) Report(_ helmspec.TestSuiteResult, settings testreport.TestReportSettings) (string, error) {
+	m.Settings = settings
+	return "output", nil
 }
 
 type testCLISettings struct {
@@ -39,16 +56,11 @@ func newTestCLISettings() testCLISettings {
 				e.Ctx = cCtx
 				e.Err = err
 			},
-			TestRunner: runner,
+			TestRunner:   runner,
+			TestReporter: &mockTestReporter{},
 		},
 		e,
 	}
-}
-
-func (m *mockTestRunner) Run(specFiles []string) (r helmspec.TestSuiteResult, err error) {
-	m.SpecFiles = specFiles
-	m.HasRun = true
-	return m.Result, nil
 }
 
 // runs the CLI with args. Outputs and errors  are captured
@@ -131,4 +143,51 @@ func TestExitCodeOnFailure(t *testing.T) {
 	assert.NoError(t, err)
 	err = app.Run(args)
 	assert.Error(t, err)
+}
+
+func TestReportPrettyWithColorByDefault(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", specDir}
+	settings, err := testRun(t, args)
+	assert.NoError(t, err)
+	reportSettings := settings.TestReporter.(*mockTestReporter).Settings
+	assert.True(t, reportSettings.UseColor)
+	assert.Equal(t, testreport.OutputFormatPretty, reportSettings.OutputFormat)
+}
+
+func TestDisableColorOutputViaFlag(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", "--no-color", specDir}
+	settings, err := testRun(t, args)
+	assert.NoError(t, err)
+	reportSettings := settings.TestReporter.(*mockTestReporter).Settings
+	assert.False(t, reportSettings.UseColor)
+}
+
+func TestDisableColorOutputViaEnv(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", specDir}
+	for _, env := range []string{"NO_COLOR", "HELM_SPEC_NO_COLOR"} {
+		t.Run(env, func(t *testing.T) {
+			os.Setenv(env, "")
+			defer os.Unsetenv(env)
+			settings, err := testRun(t, args)
+			assert.NoError(t, err)
+			reportSettings := settings.TestReporter.(*mockTestReporter).Settings
+			assert.False(t, reportSettings.UseColor)
+		})
+	}
+}
+
+func TestVerboseMode(t *testing.T) {
+	specDir, err := filepath.Abs("./testdata/specs")
+	assert.NoError(t, err)
+	args := []string{"helm-spec", "--verbose", specDir}
+	settings, err := testRun(t, args)
+	assert.NoError(t, err)
+	reportSettings := settings.TestReporter.(*mockTestReporter).Settings
+	assert.True(t, reportSettings.Verbose)
 }

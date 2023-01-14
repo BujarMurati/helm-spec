@@ -52,9 +52,9 @@ func (t TestCase) Execute(chartPath string) (result TestCaseResult) {
 }
 
 type SpecResult struct {
-	Title string `json:"title"`
-	ChartPath string `json:"chartPath"`
-	Succeeded bool `json:"succeeded"`
+	Title           string           `json:"title"`
+	ChartPath       string           `json:"chartPath"`
+	Succeeded       bool             `json:"succeeded"`
 	TestCaseResults []TestCaseResult `json:"testCaseResults"`
 }
 

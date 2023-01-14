@@ -16,8 +16,9 @@ func TestTestReporterOutputModeYaml(t *testing.T) {
 		Succeeded:   true,
 		SpecResults: []helmspec.SpecResult{result},
 	}
-	reporter := HelmTestReporter{Result: testSuiteResult}
-	output, err := reporter.Report("yaml")
+	reporter := HelmTestReporter{}
+	settings := TestReportSettings{OutputFormat: "yaml"}
+	output, err := reporter.Report(testSuiteResult, settings)
 	assert.NoError(t, err)
 	reportedResult := &helmspec.TestSuiteResult{}
 	yaml.Unmarshal([]byte(output), reportedResult)
@@ -33,13 +34,8 @@ func TestReporterOutputModePretty(t *testing.T) {
 		Succeeded:   true,
 		SpecResults: []helmspec.SpecResult{result},
 	}
-	reporter := HelmTestReporter{Result: testSuiteResult}
-	_, err = reporter.Report("pretty")
+	reporter := HelmTestReporter{}
+	settings := TestReportSettings{OutputFormat: "pretty"}
+	_, err = reporter.Report(testSuiteResult, settings)
 	assert.NoError(t, err)
-}
-
-func TestTreeIndent(t *testing.T) {
-	content := "foo"
-	output := treeIndent(content, 2, []int{0, 1}, "|")
-	assert.Equal(t, "|   |       foo", output)
 }
