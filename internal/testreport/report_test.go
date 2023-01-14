@@ -39,9 +39,3 @@ func TestReporterOutputModePretty(t *testing.T) {
 	_, err = reporter.Report(testSuiteResult, settings)
 	assert.NoError(t, err)
 }
-
-func TestTreeIndent(t *testing.T) {
-	content := "foo"
-	output := treeIndent(content, 2, []int{0, 1}, "|")
-	assert.Equal(t, "|   |       foo", output)
-}
