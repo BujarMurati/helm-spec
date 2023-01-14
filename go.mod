@@ -3,8 +3,12 @@ module github.com/bujarmurati/helm-spec
 go 1.19
 
 require (
+	github.com/mikefarah/yq/v4 v4.30.6
+	github.com/pterm/pterm v0.12.51
 	github.com/stretchr/testify v1.8.1
 	github.com/urfave/cli/v2 v2.23.7
+	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
+	sigs.k8s.io/yaml v1.3.0
 )
 
 require (
@@ -27,9 +31,7 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
-	github.com/mikefarah/yq/v4 v4.30.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/pterm/pterm v0.12.51 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
@@ -39,8 +41,6 @@ require (
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
-	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
 )

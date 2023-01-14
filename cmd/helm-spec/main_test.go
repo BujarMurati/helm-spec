@@ -191,3 +191,12 @@ func TestVerboseMode(t *testing.T) {
 	reportSettings := settings.TestReporter.(*mockTestReporter).Settings
 	assert.True(t, reportSettings.Verbose)
 }
+
+func TestVersion(t *testing.T) {
+	args := []string{"helm-spec", "--version"}
+	version = "0.1.0"
+	settings, err := testRun(t, args)
+	assert.NoError(t, err)
+	output := settings.cliSettings.Writer.(*strings.Builder).String()
+	assert.Contains(t, output, version)
+}

@@ -2,5 +2,6 @@
 tasks:
   - init: |
       brew install helm
+      brew install goreleaser/tap/goreleaser
       go mod download
 

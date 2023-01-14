@@ -1,0 +1,22 @@
+name: test
+on: 
+  pull_request:
+    branches:
+    - main
+    - 'releases/**'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install GoReleaser
+      uses: goreleaser/goreleaser-action@v4
+      with:
+        install-only: true
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '>=1.19'
+        cache: true
+    - run: make test
+    - run: make snapshot

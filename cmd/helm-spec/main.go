@@ -21,6 +21,8 @@ const (
 	defaultSpecDir                     = "./specs"
 )
 
+var version string
+
 type cliSettings struct {
 	Reader         io.Reader
 	Writer         io.Writer
@@ -102,8 +104,18 @@ func createApp(settings cliSettings) (app *cli.App, err error) {
 				Value: false,
 				Usage: "verbose output includes rendered manifests for failed test cases",
 			},
+			&cli.BoolFlag{
+				Name:  "version",
+				Value: false,
+				Usage: "print version information",
+			},
 		},
 		Action: func(cCtx *cli.Context) (err error) {
+			if cCtx.Bool("version") {
+				_, err = settings.Writer.Write([]byte(version))
+				return err
+			}
+
 			var specDir string
 			if cCtx.Args().Present() {
 				specDir = cCtx.Args().First()
